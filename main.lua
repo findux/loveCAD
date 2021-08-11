@@ -3,6 +3,7 @@ if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
 end 
 
 
+
 local mgl = require("MGL")
 local Camera = require("Camera")
 local camera = Camera:new()
@@ -12,7 +13,14 @@ sketch = Sketch:new()
 
 package.cpath =  package.cpath  ..   ";?.dll"
 local imgui = require "cimgui"
-
+print(jit.os)
+local ffi = require "ffi"
+local show = {
+    gridShow = ffi.new("bool[1]", false),
+    test = ffi.new("bool[1]", true),
+    style = ffi.new("bool[1]", false),
+    metrics = ffi.new("bool[1]", false),
+}
 
 local mouseLoc = mgl.vec2(1)
 function love.load()
@@ -112,6 +120,7 @@ function drawAxisSystem()
 end
 
 function drawGrid()
+    if show.gridShow[0] == false then return end 
     love.graphics.setColor(0.5,0.5,0.5,0.5)
     love.graphics.setLineStyle( "smooth" ) -- smooth and rough.
     love.graphics.setLineWidth( 0.1 )
@@ -156,6 +165,26 @@ function love.draw()
 
 
     imgui.ShowDemoWindow()
+
+    if imgui.BeginMainMenuBar() then
+        if imgui.BeginMenu("File") then
+            if imgui.MenuItem_Bool("Quit") then love.event.quit() end
+            imgui.EndMenu()
+        end
+        if imgui.BeginMenu("View") then
+            imgui.MenuItem_BoolPtr("Show/hide grid", nil, show.gridShow )
+            --if imgui.BeginMenu("Dear ImGui windows") then
+            --    imgui.MenuItem_BoolPtr("Show demo window", nil, gridShow)
+            --    imgui.MenuItem_BoolPtr("Show style editor", nil, gridShow)
+            --    imgui.MenuItem_BoolPtr("Show metrics window", nil, gridShow)
+            --    imgui.EndMenu()
+            --end
+            imgui.EndMenu()
+        end
+        imgui.EndMainMenuBar()
+    end
+
+
     imgui.Render()
     imgui.RenderDrawLists()
 end
