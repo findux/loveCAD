@@ -82,4 +82,36 @@ function Camera:getMatrix()
     return m
 end
 
+function Camera:setMatrix(m)
+    self.transform:setMatrix(m[1],m[2],m[3],m[4],
+    m[5],m[6],m[7],m[8],
+    m[9],m[10],m[11],m[12],
+    m[13],m[14],m[15],m[16])
+end
+
+function Camera:fit(sw,sh,min,max)
+    local sr = sw/sh
+    local d = max-min
+    local fr = d[1]/d[2]
+    local scale = 1
+    if fr >= sr then
+        scale = d[1] / sw
+    else
+        scale = d[2] / sh
+    end
+    local mid = (max + min) / 2
+    print(scale)
+    local m = mgl.mat4(1)
+    m[1] = m[1] / scale
+    m[6] = m[6] / scale
+    local locWH = mgl.inverse(m) * mgl.vec4(sw,sh,0,1)
+    locWH = mgl.vec2(locWH[1],locWH[2])
+    local locWHmid = locWH/2
+    local dddd = locWHmid - mid
+    dddd = m * mgl.vec4(dddd[1],dddd[2],0,1)
+    m[4] = dddd[1]
+    m[8] = dddd[2]
+    self:setMatrix(m)
+end
+
 return Camera
