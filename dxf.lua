@@ -35,6 +35,18 @@ function DXF:readEntities(lines)
                         table.insert(self.entities,{ dxfEntityType = value })
                         self.entities[#self.entities].layout = 0
                     end
+                    
+                    if (tonumber(key) == 1) then
+                        if self.entities[#self.entities].dxfEntityType == "TEXT" then
+                            self.entities[#self.entities].text = value --Text rotation (optional; default = 0)
+                        end
+                    end
+
+                    if (tonumber(key) == 7) then
+                        if self.entities[#self.entities].dxfEntityType == "TEXT" then
+                            self.entities[#self.entities].textStyle = tonumber(value) --Text style name (optional, default = STANDARD)
+                        end
+                    end
 
                     if (tonumber(key) == 8) then
                         self.entities[#self.entities].layer = value
@@ -66,12 +78,16 @@ function DXF:readEntities(lines)
                             self.entities[#self.entities].radius = tonumber(value) 
                              elseif self.entities[#self.entities].dxfEntityType == "ELLIPSE" then
                                 self.entities[#self.entities].ratioMinToMaj = tonumber(value)   --Ratio of minor axis to major axis
+                            elseif self.entities[#self.entities].dxfEntityType == "TEXT" then
+                                self.entities[#self.entities].textHeight = tonumber(value) --Text height
                         end
                     end
 
                     if (tonumber(key) == 41) then
                         if self.entities[#self.entities].dxfEntityType == "ELLIPSE" then
                             self.entities[#self.entities].startPar = tonumber(value)   --Ratio of minor axis to major axis
+                        elseif self.entities[#self.entities].dxfEntityType == "TEXT" then
+                            self.entities[#self.entities].scale = tonumber(value) --Relative X scale factor—width (optional; default = 1)   This value is also adjusted when fit-type text is used
                         end
                     end
 
@@ -84,6 +100,8 @@ function DXF:readEntities(lines)
                     if (tonumber(key) == 50) then
                         if self.entities[#self.entities].dxfEntityType == "ARC" then
                             self.entities[#self.entities].startAngle = tonumber(value) 
+                        elseif self.entities[#self.entities].dxfEntityType == "TEXT" then
+                            self.entities[#self.entities].textRotation = tonumber(value) --Text rotation (optional; default = 0)
                         end
                     end
 
@@ -177,11 +195,18 @@ function DXF:readEntities(lines)
     end
 end
 
-function DXF:getModelSpaceEntities()
+-- if layerName not defined , returns all entities
+function DXF:getModelSpaceEntities(layerName)
     local entities = {}
     for i,v in ipairs(self.entities) do
-        if v.layout and v.layout == 0 then
-            table.insert(entities,v)
+        if layerName then
+            if v.layout and v.layout == 0 and (v.layer == layerName) then
+                table.insert(entities,v)
+            end
+        else
+            if v.layout and v.layout == 0 then
+                table.insert(entities,v)
+            end
         end
     end
     return entities
