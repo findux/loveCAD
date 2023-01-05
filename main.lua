@@ -8,6 +8,7 @@ local dxf = require("dxf")
 dxf:load("M:/Source Personel/loveCAD/H50_06.dxf")
 
 entities = dxf:getModelSpaceEntities()
+local lep1 =  dxf.convertLWPOLYLINEVertexiesToTable(entities[1])
 
 --local clipper = require "clipper"
 --path = clipper.Path(3) -- initialise vector of size 3

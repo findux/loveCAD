@@ -213,6 +213,23 @@ function DXF:getModelSpaceEntities(layerName)
 end
 
 
-
+function DXF.convertLWPOLYLINEVertexiesToTable(lwply)
+   if lwply.dxfEntityType == "LWPOLYLINE" then
+    local z = (lwply.elevation) and lwply.elevation or 0
+    if lwply.vertexies then
+        local vtxs = {}
+        for  i,v in ipairs(lwply.vertexies) do
+            table.insert(vtxs,{ v[1] , v[2] , z ,v[3]})
+        end
+        return vtxs
+    else
+        print("Given LWPOLYLINE is not has vertexies.")    
+        return nil
+    end
+   else
+    print("Given is not LWPOLYLINE.")
+    return nil
+   end
+end
 
 return DXF
