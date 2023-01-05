@@ -2,34 +2,34 @@ DXF = {}
 
 DXF.file = ""
 DXF.entities = {}
+DXF.rawLines = {}
 
 function DXF:load(mfile)
     self.file = file
     local file = io.open(mfile, "r")
-    local lines = {}
     for l in io.lines(mfile) do
-        table.insert(lines,l)
+        table.insert(self.rawLines,l)
     end
     file:close()
-    self:readEntities(lines)
+    self:readEntities()
 
 end
 
-function DXF:readEntities(lines)
+function DXF:readEntities()
     local kostur = true
     local i = 1
     while kostur do
-        local key = lines[i]
-        local value = lines[i+1]
+        local key = self.rawLines[i]
+        local value = self.rawLines[i+1]
         if (tonumber(key) == 0) and (value == "SECTION") then
             i = i +2
-            key = lines[i]
-            value = lines[i+1]
+            key = self.rawLines[i]
+            value = self.rawLines[i+1]
             if (tonumber(key) == 2) and (value == "ENTITIES") then
                 while not((tonumber(key) == 0) and (value == "ENDSEC")) do
                     i = i +2
-                    key = lines[i]
-                    value = lines[i+1]
+                    key = self.rawLines[i]
+                    value = self.rawLines[i+1]
 
                     if (tonumber(key) == 0)  and not (value == "ENDSEC") then
                         table.insert(self.entities,{ dxfEntityType = value })
@@ -119,12 +119,12 @@ function DXF:readEntities(lines)
                         if self.entities[#self.entities].dxfEntityType == "LWPOLYLINE" then
                             local x = tonumber(value)
                             i = i +2
-                            key = lines[i]
-                            value = lines[i+1]
+                            key = self.rawLines[i]
+                            value = self.rawLines[i+1]
                             local y = tonumber(value)
                             i = i +2
-                            key = lines[i]
-                            value = lines[i+1]
+                            key = self.rawLines[i]
+                            value = self.rawLines[i+1]
                             local b = 0
                             if tonumber(key) == 42 then
                                 b = tonumber(value)
@@ -138,12 +138,12 @@ function DXF:readEntities(lines)
                         else
                             local x = tonumber(value)
                             i = i +2
-                            key = lines[i]
-                            value = lines[i+1]
+                            key = self.rawLines[i]
+                            value = self.rawLines[i+1]
                             local y = tonumber(value)
                             i = i +2
-                            key = lines[i]
-                            value = lines[i+1]
+                            key = self.rawLines[i]
+                            value = self.rawLines[i+1]
                             local z = tonumber(value)
                             if self.entities[#self.entities].vertexies == nil then
                                 self.entities[#self.entities].vertexies = {}
@@ -156,12 +156,12 @@ function DXF:readEntities(lines)
                         if self.entities[#self.entities].dxfEntityType == "LINE" then
                             local x = tonumber(value)
                             i = i +2
-                            key = lines[i]
-                            value = lines[i+1]
+                            key = self.rawLines[i]
+                            value = self.rawLines[i+1]
                             local y = tonumber(value)
                             i = i +2
-                            key = lines[i]
-                            value = lines[i+1]
+                            key = self.rawLines[i]
+                            value = self.rawLines[i+1]
                             local z = tonumber(value)
                             if self.entities[#self.entities].vertexies == nil then
                                 self.entities[#self.entities].vertexies = {}
@@ -173,12 +173,12 @@ function DXF:readEntities(lines)
                     if (tonumber(key) == 210) then
                         local x = tonumber(value)
                         i = i +2
-                        key = lines[i]
-                        value = lines[i+1]
+                        key = self.rawLines[i]
+                        value = self.rawLines[i+1]
                         local y = tonumber(value)
                         i = i +2
-                        key = lines[i]
-                        value = lines[i+1]
+                        key = self.rawLines[i]
+                        value = self.rawLines[i+1]
                         local z = tonumber(value)
                         self.entities[#self.entities].extrusionDir = { x, y, z}
                     end
@@ -189,7 +189,7 @@ function DXF:readEntities(lines)
         end
 
         i = i +2
-        if i > # lines then
+        if i > # self.rawLines then
             kostur = false
         end
     end
