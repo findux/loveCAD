@@ -2,6 +2,42 @@ if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
     require("lldebugger").start()
 end
 
+local xml2lua = require("xml2lua")
+--Uses a handler that converts the XML to a Lua table
+local handler = require("xmlhandler.tree")
+
+local urdf = [[<?xml version="1.0"?>
+ <robot name="multipleshapes">
+ <link name="base_link">
+   <visual>
+     <geometry>
+       <cylinder length="0.6" radius="0.2"/>
+     </geometry>
+   </visual>
+ </link>
+  <link name="right_leg">
+    <visual>
+      <geometry>
+        <box size="0.6 0.1 0.2"/>
+      </geometry>
+    </visual>
+  </link>
+  <joint name="base_to_right_leg" type="fixed">
+    <parent link="base_link"/>
+    <child link="right_leg"/>
+  </joint>
+</robot>]]
+
+local parser = xml2lua.parser(handler)
+parser:parse(urdf)
+--Recursivelly prints the table in an easy-to-ready format
+xml2lua.printable(handler.root)
+
+local Robot = {
+    Link = {},
+    Mesh = {}
+}
+
 local clipper = require "clipper"
 path = clipper.Path(3) -- initialise vector of size 3
 path[0] = clipper.IntPoint(2, 3) -- specify first IntPoint in vector

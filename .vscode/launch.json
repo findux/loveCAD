@@ -28,6 +28,20 @@
         "scriptRoots": [
           "${workspaceFolder}"
         ]
+      },
+      {
+        "name": "clipperDENEME",
+        "type": "lua-local",
+        "request": "launch",
+        "program": {
+          "command": "d:/Program Files/LOVE/love.exe"
+        },
+        "args": [
+          "\"${workspaceFolder}/ClipperTestOrtami/main.lua\""
+        ],
+        "scriptRoots": [
+          "${workspaceFolder}"
+        ]
       }
     ]
   }
