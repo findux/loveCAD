@@ -2,45 +2,324 @@ if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
     require("lldebugger").start()
 end
 
-local xml2lua = require("xml2lua")
---Uses a handler that converts the XML to a Lua table
-local handler = require("xmlhandler.tree")
+local util = require("utility")
+local dxf = require("dxf")
 
-local urdf = [[<?xml version="1.0"?>
- <robot name="multipleshapes">
- <link name="base_link">
-   <visual>
-     <geometry>
-       <cylinder length="0.6" radius="0.2"/>
-     </geometry>
-   </visual>
- </link>
-  <link name="right_leg">
-    <visual>
-      <geometry>
-        <box size="0.6 0.1 0.2"/>
-      </geometry>
-    </visual>
-  </link>
-  <joint name="base_to_right_leg" type="fixed">
-    <parent link="base_link"/>
-    <child link="right_leg"/>
-  </joint>
-</robot>]]
+dxf:load("M:/Source Personel/loveCAD/H50_06.dxf")
 
-local parser = xml2lua.parser(handler)
-parser:parse(urdf)
---Recursivelly prints the table in an easy-to-ready format
-xml2lua.printable(handler.root)
+entities = dxf:getModelSpaceEntities()
+local lep1 =  dxf.convertLWPOLYLINEVertexiesToTable(entities[1])
 
-local Robot = {
-    Link = {},
-    Mesh = {}
-}
+--local clipper = require "clipper"
+--path = clipper.Path(3) -- initialise vector of size 3
+--path[0] = clipper.IntPoint(2, 3) -- specify first IntPoint in vector
+function adeSplit(inputstr, sep)
+	if sep == nil then
+		sep = "%s"
+	end
+	local t = {}
+	i = 1
+	for str in string.gmatch(inputstr, "([^" .. sep .. "]+)") do
+		t[i] = str
+		i = i + 1
+	end
+	return t
+end
+function beginDXFHeader()
+	local out = ""
+	out = out .. "999"
+	out = out .. "\nDXF created from AdekoCAM DXF Export PostProcessor"
+	out = out .. "\n0"
+	out = out .. "\nSECTION"
+	out = out .. "\n2"
+	out = out .. "\nHEADER"
+	out = out .. "\n9"
+	out = out .. "\n$ACADVER"
+	out = out .. "\n1"
+	out = out .. "\nAC1006"
+	out = out .. "\n9"
+	out = out .. "\n$INSBASE"
+	out = out .. "\n10"
+	out = out .. "\n0.0"
+	out = out .. "\n20"
+	out = out .. "\n0.0"
+	out = out .. "\n30"
+	out = out .. "\n0.0"
+	out = out .. "\n9"
+	out = out .. "\n$EXTMIN"
+	out = out .. "\n10"
+	out = out .. "\n0.0"
+	out = out .. "\n20"
+	out = out .. "\n0.0"
+	out = out .. "\n9"
+	out = out .. "\n$EXTMAX"
+	out = out .. "\n10"
+	out = out .. "\n1000.0"
+	out = out .. "\n20"
+	out = out .. "\n1000.0"
+	out = out .. "\n0"
+	out = out .. "\nENDSEC"
+	out = out .. "\n0"
+	out = out .. "\nTABLE"
+	out = out .. "\n2"
+	out = out .. "\nLAYER"
+	out = out .. "\n70"
+	out = out .. "\n6"
+	out = out .. "\n0"
+	out = out .. "\nLAYER"
+	out = out .. "\n2"
+	out = out .. "\n1"
+	out = out .. "\n70"
+	out = out .. "\n64"
+	out = out .. "\n62"
+	out = out .. "\n7"
+	out = out .. "\n6"
+	out = out .. "\nCONTINUOUS"
+	out = out .. "\n0"
+	out = out .. "\nLAYER"
+	out = out .. "\n2"
+	out = out .. "\n2"
+	out = out .. "\n70"
+	out = out .. "\n64"
+	out = out .. "\n62"
+	out = out .. "\n7"
+	out = out .. "\n6"
+	out = out .. "\nCONTINUOUS"
+	out = out .. "\n0"
+	out = out .. "\nENDTAB"
+	out = out .. "\n0"
+	out = out .. "\nTABLE"
+	out = out .. "\n2"
+	out = out .. "\nSTYLE"
+	out = out .. "\n70"
+	out = out .. "\n0"
+	out = out .. "\n0"
+	out = out .. "\nENDTAB"
+	out = out .. "\n0"
+	out = out .. "\nENDSEC"
+	out = out .. "\n0"
+	out = out .. "\nSECTION"
+	out = out .. "\n2"
+	out = out .. "\nBLOCKS"
+	out = out .. "\n0"
+	out = out .. "\nENDSEC"
+	out = out .. "\n0"
+	out = out .. "\nSECTION"
+	out = out .. "\n2"
+	out = out .. "\nENTITIES"
+	return out
+end
+function endDXFFooter()
+	local out = ""
+	out = out .. "\n0"
+	out = out .. "\nENDSEC"
+	out = out .. "\n0"
+	out = out .. "\nEOF"
+	return out
+end
+function gibenSizingMachineFDTFile()
+    local fdtFile = io.open([[M:/Source/SIZING MACHINE GIBEN/abies beyaz.fdt]],"r")
+    local content = fdtFile:read("*a")
+    fdtFile:close()
+    local lines = adeSplit(content, "\n")
+    local newLines = ""
+    local tabs = 0
+    for i,r in ipairs(lines) do
+        if r:find("End") then tabs = tabs - 1 end
+        local newRow = ""
+        for i = tabs,1,-1 do 
+            newRow = newRow .. "    " 
+        end
+        newRow = newRow .. r
+        newLines = newLines .. "\n" .. newRow
+        if r:find("Start") then tabs = tabs + 1 end
+    end
+    local outFile = io.open([[M:/Source/SIZING MACHINE GIBEN/abies beyaz_generated.fdt]],"w")
+    outFile:write(newLines)
+    outFile:close()
 
-local clipper = require "clipper"
-path = clipper.Path(3) -- initialise vector of size 3
-path[0] = clipper.IntPoint(2, 3) -- specify first IntPoint in vector
+
+    local panels = {}
+    local panel = {}
+    local XANGINF , YANGINF , XANGSUP , YANGSUP = 0,0,0,0
+    local TIPOTG,TGUTENTE,PADRE,FIGLIO,FRATELLO,PEZZOSTACCATO = 0,0,0,0,0,0
+    local SIDP = ""
+    for i,row in ipairs(lines) do
+        if row:find("XANGINF") then
+            local rowItem = adeSplit(row,"=")
+            XANGINF = tonumber(rowItem[2])* 0.001
+        end
+        if row:find("YANGINF") then
+            local rowItem = adeSplit(row,"=")
+            YANGINF = tonumber(rowItem[2])* 0.001
+        end
+        if row:find("XANGSUP") then
+            local rowItem = adeSplit(row,"=")
+            XANGSUP = tonumber(rowItem[2])* 0.001
+        end
+        if row:find("YANGSUP") then
+            local rowItem = adeSplit(row,"=")
+            YANGSUP = tonumber(rowItem[2]) * 0.001
+        end
+
+        if row:find("TIPOTG") then
+            local rowItem = adeSplit(row,"=")
+            TIPOTG = tonumber(rowItem[2]) 
+        end
+        if row:find("TGUTENTE") then
+            local rowItem = adeSplit(row,"=")
+            TGUTENTE = tonumber(rowItem[2]) 
+        end
+        if row:find("PADRE") then
+            local rowItem = adeSplit(row,"=")
+            PADRE = tonumber(rowItem[2]) 
+        end
+        if row:find("FIGLIO") then
+            local rowItem = adeSplit(row,"=")
+            FIGLIO = tonumber(rowItem[2]) 
+        end
+        if row:find("FRATELLO") then
+            local rowItem = adeSplit(row,"=")
+            FRATELLO = tonumber(rowItem[2]) 
+        end
+        if row:find("PEZZOSTACCATO") then
+            local rowItem = adeSplit(row,"=")
+            PEZZOSTACCATO = tonumber(rowItem[2]) 
+        end
+
+        
+        if row:find("SIDP") then
+            local rowItem = adeSplit(row,"=")
+            SIDP = rowItem[2]
+        end
+
+
+        if row:find("EndDatiElementoFDS") then
+            if panel[1] == nil then panel[1] = {} end
+            table.insert(panel[1],{XANGINF , YANGINF , XANGSUP , YANGSUP,SIDP})
+        end
+        if row:find("EndTaglio") then
+            if panel[2] == nil then panel[2] = {} end
+            table.insert(panel[2],{XANGINF , YANGINF , XANGSUP , YANGSUP , TIPOTG , TGUTENTE , PADRE , FIGLIO , FRATELLO , PEZZOSTACCATO})
+        end
+        if row:find("EndPannelloFDS") then
+            table.insert(panels,panel)
+            panel = {}
+        end
+    end
+
+
+    --craete dxf
+    local dxf = beginDXFHeader()
+    for i,pnl in ipairs(panels) do
+        -- dxf header
+        local offsetXXX = (i-1) * 4000
+        for j,prt in ipairs(pnl[1]) do
+            dxf = dxf .. "\n  0";
+	        dxf = dxf .. "\nLWPOLYLINE";
+	        dxf = dxf .. "\n  8";
+	        dxf = dxf .. "\n" .. "PRT";
+	        dxf = dxf .. "\n  90";
+	        dxf = dxf .. "\n5";
+	        dxf = dxf .. "\n  70";
+	        dxf = dxf .. "\n0";
+	        dxf = dxf .. "\n  43";
+	        dxf = dxf .. "\n0.0";
+	        dxf = dxf .. "\n  38";
+	        dxf = dxf .. string.format("\n%.5f",0.0);
+	        dxf = dxf .. "\n  39";
+	        dxf = dxf .. string.format("\n%.5f",0.0);
+	        dxf = dxf .. "\n  62";
+	        dxf = dxf .. "\n0";
+	        dxf = dxf .. string.format("\n  10\n%.5f\n  20\n%.5f\n  42\n0.0",offsetXXX + prt[1],prt[2]);
+	        dxf = dxf .. string.format("\n  10\n%.5f\n  20\n%.5f\n  42\n0.0",offsetXXX + prt[3],prt[2]);
+	        dxf = dxf .. string.format("\n  10\n%.5f\n  20\n%.5f\n  42\n0.0",offsetXXX + prt[3],prt[4]);
+	        dxf = dxf .. string.format("\n  10\n%.5f\n  20\n%.5f\n  42\n0.0",offsetXXX + prt[1],prt[4]);
+	        dxf = dxf .. string.format("\n  10\n%.5f\n  20\n%.5f\n  42\n0.0",offsetXXX + prt[1],prt[2]);
+            dxf = dxf .. "\n0"
+		    dxf = dxf .. "\nTEXT"
+            dxf = dxf .. "\n  8"
+            dxf = dxf .. "\n0"
+            dxf = dxf .. "\n 10"
+            local textPos = { x = (prt[1] + prt[3]) * 0.5 ,y = (prt[2] + prt[4]) * 0.5  }
+		    dxf = dxf .. string.format("\n%f",offsetXXX + textPos.x)
+		    dxf = dxf .. "\n 20"
+		    dxf = dxf .. string.format("\n%f",textPos.y)
+		    dxf = dxf .. "\n 30"
+		    dxf = dxf .. "\n0.0"
+		    dxf = dxf .. "\n 40"
+		    dxf = dxf .. "\n14.0"
+		    dxf = dxf .. "\n  1"
+		    dxf = dxf .. string.format("\n%d/%s",j,prt[5])
+		    local textAngle = "90"
+		    if (util.fuzzyCompare(prt[1], prt[3]) == true) then
+		    	textAngle = "0"
+		    end
+		    dxf = dxf .. "\n 50"
+		    dxf = dxf .. "\n" .. textAngle
+        end
+        for j,prt in ipairs(pnl[2]) do
+            dxf = dxf .. "\n  0";
+	        dxf = dxf .. "\nLWPOLYLINE";
+	        dxf = dxf .. "\n  8";
+	        dxf = dxf .. "\n" .. "PRT";
+	        dxf = dxf .. "\n  90";
+	        dxf = dxf .. "\n5";
+	        dxf = dxf .. "\n  70";
+	        dxf = dxf .. "\n0";
+	        dxf = dxf .. "\n  43";
+	        dxf = dxf .. "\n0.0";
+	        dxf = dxf .. "\n  38";
+	        dxf = dxf .. string.format("\n%.5f",0.0);
+	        dxf = dxf .. "\n  39";
+	        dxf = dxf .. string.format("\n%.5f",0.0);
+	        dxf = dxf .. "\n  62";
+	        dxf = dxf .. "\n1";
+	        dxf = dxf .. string.format("\n  10\n%.5f\n  20\n%.5f\n  42\n0.0",offsetXXX + prt[1],prt[2]);
+	        dxf = dxf .. string.format("\n  10\n%.5f\n  20\n%.5f\n  42\n0.0",offsetXXX + prt[3],prt[4]);
+            dxf = dxf .. "\n0"
+		    dxf = dxf .. "\nTEXT"
+            dxf = dxf .. "\n  8"
+            dxf = dxf .. "\n0"
+            dxf = dxf .. "\n 10"
+            local textPos = { x = (prt[1] + prt[3]) * 0.5 ,y = (prt[2] + prt[4]) * 0.5  }
+		    dxf = dxf .. string.format("\n%f",offsetXXX + textPos.x)
+		    dxf = dxf .. "\n 20"
+		    dxf = dxf .. string.format("\n%f",textPos.y)
+		    dxf = dxf .. "\n 30"
+		    dxf = dxf .. "\n0.0"
+		    dxf = dxf .. "\n 40"
+		    dxf = dxf .. "\n14.0"
+		    dxf = dxf .. "\n  1"
+		    dxf = dxf .. string.format("\n%d/%d/%d/%d/%d/%d",prt[5],prt[6],prt[7],prt[8],prt[9],prt[10])
+		    local textAngle = "90"
+		    if (util.fuzzyCompare(prt[1], prt[3]) == true) then
+		    	textAngle = "0"
+		    end
+		    dxf = dxf .. "\n 50"
+		    dxf = dxf .. "\n" .. textAngle
+
+        end
+    end
+    --dxf footer
+    dxf = dxf .. endDXFFooter()
+    --dxf save
+    local dxfFileName = string.format([[M:/Source/SIZING MACHINE GIBEN/%d.dxf]],#panels)
+    local outFile = io.open(dxfFileName,"w")
+    outFile:write(dxf)
+    outFile:close()
+
+
+print("durrr")
+
+
+
+end
+
+gibenSizingMachineFDTFile()
+
+
+
 
 local mgl = require("MGL")
 local Camera = require("Camera")
@@ -54,6 +333,8 @@ local imgui = require "cimgui"
 local io = imgui.GetIO()
 print(jit.os)
 local ffi = require "ffi"
+--local nfd = require "nfd"
+--local filePath = nfd.open(nil, ".png")
 local show = {
     gridShow = ffi.new("bool[1]", true),
     test = ffi.new("bool[1]", true),
